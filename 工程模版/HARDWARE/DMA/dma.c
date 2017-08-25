@@ -127,7 +127,7 @@ void dma_test(void)
 
 	memcpy(SendBuff,"test\r\n",6);
 	
-	printf("\r\nDMA DATA:\r\n"); 	          
+//	printf("\r\nDMA DATA:\r\n"); 	          
 	USART_DMACmd(USART3,USART_DMAReq_Tx,ENABLE);  //使能串口的DMA发送  
 //		USART_DMACmd(USART3,USART_DMAReq_Rx,ENABLE);  //使能串口的DMA接收
 	MYDMA_Enable(DMA1_Stream3,SEND_BUF_SIZE);     //开始一次DMA传输！	
@@ -141,6 +141,6 @@ void dma_test(void)
 		pro=DMA_GetCurrDataCounter(DMA1_Stream3);//得到当前还剩余多少个数据
 		pro=1-pro/SEND_BUF_SIZE;    //得到百分比	  
 		pro*=100;      			    //扩大100倍
-		printf("%.2f\r\n",pro);
+//		printf("%.2f\r\n",pro);
 	}
 }

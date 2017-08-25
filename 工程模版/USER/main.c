@@ -52,21 +52,21 @@ static u8 constate=0;	//连接状态
 static u8 overtime=0;
 
 _SS	
-	//p=mymalloc(SRAMIN,32);
-	//p1=mymalloc(SRAMIN,32);
-	
-	printf("%s测试\r\n",esp_12F_WORKMODE_TBL[netpro-1]);
+
+//	printf("%s测试\r\n",esp_12F_WORKMODE_TBL[netpro-1]);
 		
 	while(1)
 	{
 		if(esp_12F_check_cmd("CONNECT"))   //收到设备连接信息
 		{
 			if(esp_12F_check_cmd("DISCONNECT"))
-			{printf("wifi连接断开\r\n");goto RET;}
+			{//printf("wifi连接断开\r\n");
+				goto RET;}
 			if(esp_12F_check_cmd("WIFI CONNECTED")||esp_12F_check_cmd("WIFI GOT IP"))
-			{printf("wifi连接\r\n");	goto RET;}
+			{//printf("wifi连接\r\n");
+				goto RET;}
 			
-			printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
+			//printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
 			sprintf((char*)p,"AT+CIPSENDEX=%c,20",wifiUSART_RX_BUF[0]);
 			esp_12F_send_cmd(p,"\r\n> ",1000);	//发送命令
 			wifiUSART_RX_STA=0;
@@ -84,7 +84,7 @@ RET:
 		}
 		if(esp_12F_check_cmd("CLOSED"))		//收到设备断开信息
 		{
-			printf("客户端%c 断开TCP服务器\r\n",wifiUSART_RX_BUF[0]);
+			//printf("客户端%c 断开TCP服务器\r\n",wifiUSART_RX_BUF[0]);
 			wifiUSART_RX_STA=0;				//允许新数据
 		}
 		WaitX(1);
@@ -104,23 +104,21 @@ RET:
 			{	t++;
 			}else
 			{	
-				constate=esp_12F_apsta_check();//得到连接状态
+				constate=esp_12F_apsta_check();//检查连接状态
 				if(constate=='2')
-					printf("网络正常,未建立TCP连接\r\n"); 
+					//printf("网络正常,未建立TCP连接\r\n"); 
 				if(constate=='3')
-					printf("10分钟未收到客户端信息\r\n");  
+					//printf("10分钟未收到客户端信息\r\n");  
 				if(constate=='4')
-					printf("10分钟无TCP连接\r\n"); 
+					//printf("10分钟无TCP连接\r\n"); 
 				if(constate=='5')
-					printf("未连接网络\r\n"); 
-//				esp_12F_send_cmd("AT+CIPSERVER=0","OK",50); //关闭服务器
+					//printf("未连接网络\r\n"); 
 				t=0;
 				break;
 			}
 		}
 	}
-	//myfree(SRAMIN,p);		//释放内存 
-	//myfree(SRAMIN,p1);	
+
 //_EE
 	;}; return 0;
 }

@@ -45,7 +45,7 @@ u8 esp_12F_init(void)
 		delay_ms(10);
 		if(i>20)
 		{
-			printf("wifi模块串口通信异常\r\n");
+//			printf("wifi模块串口通信异常\r\n");
 			return 1;
 		}
 	}
@@ -60,7 +60,7 @@ void esp_12F_at_response(u8 mode)
 	if(wifiUSART_RX_STA&0X8000)		//接收到一次数据了
 	{ 
 		wifiUSART_RX_BUF[wifiUSART_RX_STA&0X7FFF]=0;//添加结束符
-		printf("%s",wifiUSART_RX_BUF);	//发送到串口
+//		printf("%s",wifiUSART_RX_BUF);	//发送到串口
 		if(mode)wifiUSART_RX_STA=0;
 	} 
 }
@@ -103,7 +103,6 @@ u8 esp_12F_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
 			{
 				if(esp_12F_check_cmd(ack)) 
 				{
-//					esp_12F_at_response(0);
 					break;
 				}//得到有效数据 
 				wifiUSART_RX_STA=0;
@@ -111,7 +110,6 @@ u8 esp_12F_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
 		}
 		if(waittime==0)
 		{
-			printf("%s 响应超时\r\n",cmd);
 			res=1;
 		} 
 	}
@@ -140,7 +138,7 @@ u8 esp_12F_send_data(u8 *cmd,u8 *ack,u16 waittime)
 		}
 		if(waittime==0)
 		{
-			printf("%s  超时\r\n",cmd);
+//			printf("%s  超时\r\n",cmd);
 			res=1;
 		} 
 	}
@@ -264,9 +262,7 @@ void esp_12F_ap_config(void)
 {
 	u8 *p=NULL;
 	
-	//p=mymalloc(SRAMIN,32);							//申请32字节内存
-	
-	printf("ssid:%s passwd:%s ch:%d ecn:%s max_link:%d\r\n",ap_ssid,ap_password,ap_channel,esp_12F_ECN[ap_encryption],ap_max_conn);
+//	printf("ssid:%s passwd:%s ch:%d ecn:%s max_link:%d\r\n",ap_ssid,ap_password,ap_channel,esp_12F_ECN[ap_encryption],ap_max_conn);
 	
 	while(esp_12F_send_cmd("AT+CWMODE=2","OK",100));		//设置WIFI AP模式
 
@@ -278,48 +274,40 @@ void esp_12F_ap_config(void)
 	esp_12F_send_cmd(p,"OK",100);					//配置AP参数
 	
 	wifiUSART_RX_STA=0;
-	
-	//myfree(SRAMIN,p);		//释放内存 
+
 }
 
 //esp_12F模块信息
 void esp_12F_msg(void)
 {
 	u8 *p=NULL,*p1=NULL,*p2=NULL;
-	//p=mymalloc(SRAMIN,32);							//申请32字节内存
-	//p1=mymalloc(SRAMIN,32);							//申请32字节内存
-	//p2=mymalloc(SRAMIN,32);							//申请32字节内存
 
 	esp_12F_send_cmd("AT+GMR","OK",20);		//获取固件版本号
 	p=esp_12F_check_cmd("SDK version:");    
 	p1=(u8*)strstr((const char*)(p+1),"\r\n");
 	*p1=0;
-	printf("固件版本:%s\r\n",p);
+//	printf("固件版本:%s\r\n",p);
 	esp_12F_send_cmd("AT+CWMODE?","+CWMODE:",20);	//获取网络模式
 	p=esp_12F_check_cmd(":");
-	printf("网络模式:%s\r\n",(u8*)esp_12F_NETMODE_TBL[*(p+1)-'1']);
+//	printf("网络模式:%s\r\n",(u8*)esp_12F_NETMODE_TBL[*(p+1)-'1']);
 	esp_12F_send_cmd("AT+CWSAP?","+CWSAP:",100);	//获取ap配置
 	p=esp_12F_check_cmd("\"");
 	p1=(u8*)strstr((const char*)(p+1),"\"");
 	p2=p1;
 	*p1=0;
-	printf("AP_SSID号:%s\r\n",p+1);
+//	printf("AP_SSID号:%s\r\n",p+1);
 	p=(u8*)strstr((const char*)(p2+1),"\"");
 	p1=(u8*)strstr((const char*)(p+1),"\"");
 	p2=p1;
 	*p1=0;
 	delay_ms(1);
-	printf("AP_密码:%s\r\n",p+1);
+//	printf("AP_密码:%s\r\n",p+1);
 	p=(u8*)strstr((const char*)(p2+1),",");
 	p1=(u8*)strstr((const char*)(p+1),",");
 	*p1=0;
-	printf("通道号:%s\r\n",p+1);
-	printf("加密方式:%s\r\n",(u8*)esp_12F_ECN[*(p1+1)-'0']);
+//	printf("通道号:%s\r\n",p+1);
+//	printf("加密方式:%s\r\n",(u8*)esp_12F_ECN[*(p1+1)-'0']);
 	wifiUSART_RX_STA=0;
-	
-	//myfree(SRAMIN,p);		//释放内存 
-	//myfree(SRAMIN,p1);		//释放内存 
-	//myfree(SRAMIN,p2);		//释放内存 
 }
 
 //初始化智能配网功能
@@ -344,7 +332,7 @@ u8 wifi_ESP(void)
 	u16 i=0;
 ESP:	
 	set_ESP();
-	printf("等待smartconfig 配置wifi账号密码\r\n");
+//	printf("等待smartconfig 配置wifi账号密码\r\n");
 	while(!(esp_12F_check_cmd("WIFI CONNECT")
 			||esp_12F_check_cmd("WIFI GOT IP")))
 	{
@@ -353,19 +341,19 @@ ESP:
 		i++;
 		if(i%6000==0)
 		{
-			printf("等待smartconfig 配置wifi账号密码\r\n");
+//			printf("等待smartconfig 配置wifi账号密码\r\n");
 			stop_ESP();
 			goto ESP;
 		}
 		if(i>60000)
 		{
-			printf("smartconfig失败\r\n");
+//			printf("smartconfig失败\r\n");
 			stop_ESP();
 			i=0;
 			return 1;
 		}
 	}
-	printf("smartconfig成功\r\n");
+//	printf("smartconfig成功\r\n");
 	stop_ESP();
 	return 0;
 }
@@ -389,6 +377,5 @@ u8* chech_ssid(u8* ssid)
 {
 	esp_12F_send_cmd("AT+CWLAP","+CWLAP:",5000);
 	while(esp_12F_check_cmd("OK")){delay_ms(10);wifiUSART_RX_STA=0;};
-//	esp_12F_at_response(1);  //输出扫描到的信息wifi
 	return esp_12F_check_cmd(ssid);
 }

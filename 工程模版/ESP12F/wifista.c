@@ -11,10 +11,8 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	u8 *p=NULL;
 	u8 res=0;
 	u8 i=0;
-	
-	//p=mymalloc(SRAMIN,32);
-	
-	printf("无线参数为:%s,%s,%s\r\n",(u8*)ssid,(u8*)sta_encryption,(u8*)password);
+
+//	printf("无线参数为:%s,%s,%s\r\n",(u8*)ssid,(u8*)sta_encryption,(u8*)password);
 
 	while(esp_12F_send_cmd("AT+CWMODE=1","OK",500))
 	{i++;if(i>20) {res=1;goto re;}};		//设置WIFI STA模式
@@ -30,7 +28,6 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	
 	wifiUSART_RX_STA=0;
 
-	//myfree(SRAMIN,p);
 re:	
 	return res;
 }
@@ -48,13 +45,11 @@ u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum)
 	u8 buf[16]={0};
 	u8 *p=NULL;
 	u8 res=0;
-
-	//p=mymalloc(SRAMIN,32);							//申请32字节内存
 	
 	if(netpro==0)   //UDP
 	{
-		printf("WIFI-STA udp mode\r\n"); 
-		printf("正在配置模块,请稍等...");
+//		printf("WIFI-STA udp mode\r\n"); 
+//		printf("正在配置模块,请稍等...");
 		sprintf((char*)p,"AT+CIPSTART=\"UDP\",\"%s\",%s",ipbuf,(u8*)portnum);    //配置目标UDP服务器
 		delay_ms(200);
 		esp_12F_send_cmd("AT+CIPMUX=0","OK",20);  //单链接模式
@@ -63,21 +58,21 @@ u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum)
 	}
 	else     //TCP
 	{ 
-		printf("正在配置模块,请稍等...\r\n");
+//		printf("正在配置模块,请稍等...\r\n");
 		if(netpro==1)     //TCP Client    透传模式测试
 		{
-			printf("WIFI-STA tcp_client mode\r\n");
+//			printf("WIFI-STA tcp_client mode\r\n");
 			esp_12F_send_cmd("AT+CIPMUX=0","OK",20);   //0：单连接
 			sprintf((char*)p,"AT+CIPSTART=\"TCP\",\"%s\",%s",ipbuf,(u8*)portnum);    //配置目标TCP服务器
 			while(esp_12F_send_cmd(p,"OK",200))
 			{
-				printf("连接TCP失败"); //连接失败	 
+//				printf("连接TCP失败"); //连接失败	 
 			}	
 	//		esp_12F_send_cmd("AT+CIPMODE=1","OK",200);      //传输模式为：透传			
 		}
 		else					//TCP Server
 		{
-			printf("WIFI-STA tcp_server mode\r\n");
+//			printf("WIFI-STA tcp_server mode\r\n");
 			esp_12F_send_cmd("AT+CIPMUX=1","OK",50);   //1：多连接
 			delay_ms(50);
 			sprintf((char*)p,"AT+CIPSERVER=1,%s",(u8*)portnum);    //开启Server模式(0，关闭；1，打开)，端口号为portnum
@@ -87,11 +82,10 @@ u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum)
 			esp_12F_send_cmd(p,"OK",100);     //服务器连接超时 [1,7200]s
 		}
 	}
-	esp_12F_get_staip(buf);//服务器模式,获取ip
-	printf("IP地址:%s 端口:%s\r\n",buf,(u8*)portnum);//显示IP地址和端口
+//	esp_12F_get_staip(buf);//服务器模式,获取ip
+//	printf("IP地址:%s 端口:%s\r\n",buf,(u8*)portnum);//显示IP地址和端口
 	
 	wifiUSART_RX_STA=0;
 
-	//myfree(SRAMIN,p);		//释放内存 	
 	return res;		
 }
