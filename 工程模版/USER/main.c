@@ -63,7 +63,7 @@ _SS
 		{
 			if(esp_12F_check_cmd("DISCONNECT"))
 			{printf("wifi连接断开\r\n");goto RET;}
-			if(esp_12F_check_cmd("WIFI CONNECTED"))
+			if(esp_12F_check_cmd("WIFI CONNECTED")||esp_12F_check_cmd("WIFI GOT IP"))
 			{printf("wifi连接\r\n");	goto RET;}
 			
 			printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
@@ -76,7 +76,7 @@ _SS
 				wifiUSART_RX_STA=0;
 				delay_ms(10);
 				overtime++;
-				if(overtime>20){overtime=0;break;}
+				if(overtime>20){overtime=0;continue;}
 			}
 			t=0;
 RET:			
@@ -105,10 +105,16 @@ RET:
 			{	t++;
 			}else
 			{	
-				constate=esp_12F_consta_check();//得到连接状态
-				if(constate==0)printf("连接正常\r\n10分钟无设备信息\r\n关闭服务\r\n");  //连接状态
-				else printf("网络连接失败\r\n关闭服务\r\n"); 	
-//				esp_12F_send_cmd("AT+CIPSERVER=0","OK",50);
+				constate=esp_12F_apsta_check();//得到连接状态
+				if(constate=='2')
+					printf("网络正常,未建立TCP连接\r\n"); 
+				if(constate=='3')
+					printf("10分钟未收到客户端信息\r\n");  
+				if(constate=='4')
+					printf("无TCP连接\r\n"); 
+				if(constate=='5')
+					printf("未连接网络\r\n"); 
+//				esp_12F_send_cmd("AT+CIPSERVER=0","OK",50); //关闭服务器
 				t=0;
 				break;
 			}
