@@ -103,7 +103,7 @@ u8 esp_12F_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
 			{
 				if(esp_12F_check_cmd(ack)) 
 				{
-					//esp_12F_at_response(0);
+//					esp_12F_at_response(0);
 					break;
 				}//得到有效数据 
 				wifiUSART_RX_STA=0;
@@ -154,7 +154,18 @@ u8 esp_12F_send_data(u8 *cmd,u8 *ack,u16 waittime)
 //		1 失败
 u8 esp_12F_factory(void)
 {
-	return esp_12F_send_cmd("AT+RESTORE","OK",100);
+	u8 i=0;
+	u8 res=0;
+	esp_12F_send_cmd("AT+RESTORE","OK",100);
+	while(!esp_12F_check_cmd("ready"))
+	{
+		wifiUSART_RX_STA=0;
+		i++;
+		delay_ms(10);
+		if(i>200) 
+		{res=1;break;}
+	}
+	return res;
 }
 
 //重启模块
@@ -163,15 +174,18 @@ u8 esp_12F_factory(void)
 u8 esp_12F_reboot(void)
 {
 	u8 i=0;
+	u8 res=0;
+	esp_12F_send_cmd("AT+CWAUTOCONN=0","OK",100);
 	esp_12F_send_cmd("AT+RST","OK",100);
 	while(!esp_12F_check_cmd("ready"))
 	{
+		wifiUSART_RX_STA=0;
 		i++;
 		delay_ms(10);
-		wifiUSART_RX_STA=0;
-		if(i>200) {break;}
+		if(i>200) 
+		{res=1;break;}
 	}
-	return esp_12F_send_cmd("AT","OK",100);
+	return res;
 }
 
 //esp_12F退出透传模式
@@ -204,6 +218,7 @@ u8 esp_12F_apsta_check(void)
 //	if(esp_12F_quit_trans())return 0;			//退出透传 
 	esp_12F_send_cmd("AT+CIPSTATUS",":",100);	//查询连接状态
 	p=esp_12F_check_cmd("STATUS:");
+	wifiUSART_RX_STA=0;
 	if(p)return p[7];
 	else return 1;
 }
@@ -222,6 +237,7 @@ u8 esp_12F_consta_check(void)
 	u8 *p=NULL;
 	esp_12F_send_cmd("AT+CWJAP?","OK",50);		//查询连接状态 无连接NO AP,其他：+ CWJAP:<ssid>,<bssid>,<channel>,<rssi> 
 	p=esp_12F_check_cmd("+CWJAP:"); 
+	wifiUSART_RX_STA=0;
 	if(p[0]!='+') res=1; 
 	return res;
 }
@@ -239,10 +255,11 @@ void esp_12F_get_staip(u8* ipbuf)
 	p=esp_12F_check_cmd("\"");
 	p1=(u8*)strstr((const char*)(p+1),"\"");
 	*p1=0;
-	sprintf((char*)ipbuf,"%s",p+1);	
+	sprintf((char*)ipbuf,"%s",p+1);		
+	wifiUSART_RX_STA=0;
 }
 
-//配置启用ap
+//配置启用ap   启用同时wifi会关闭
 void esp_12F_ap_config(void)
 {
 	u8 *p=NULL;
@@ -259,6 +276,8 @@ void esp_12F_ap_config(void)
 	//WIFI AP模式模块对外的WIFI网络名称/密码/信道/加密模式/允许连接数
 	sprintf((char*)p,"AT+CWSAP_DEF=\"%s\",\"%s\",%d,%d,%d",ap_ssid,ap_password,ap_channel,ap_encryption,ap_max_conn);
 	esp_12F_send_cmd(p,"OK",100);					//配置AP参数
+	
+	wifiUSART_RX_STA=0;
 	
 	myfree(SRAMIN,p);		//释放内存 
 }
@@ -296,6 +315,7 @@ void esp_12F_msg(void)
 	*p1=0;
 	printf("通道号:%s\r\n",p+1);
 	printf("加密方式:%s\r\n",(u8*)esp_12F_ECN[*(p1+1)-'0']);
+	wifiUSART_RX_STA=0;
 	
 	myfree(SRAMIN,p);		//释放内存 
 	myfree(SRAMIN,p1);		//释放内存 
@@ -314,6 +334,7 @@ void set_ESP(void)
 void stop_ESP(void)
 {
 	esp_12F_send_cmd("AT+CWSTOPSMART","OK",100);
+	wifiUSART_RX_STA=0;
 }
 //智能配网功能 10分钟不成功则失败
 //返回值：0 成功
@@ -353,9 +374,12 @@ ESP:
 u8 change_port(u8* portnum)
 {
 	u8* p=NULL;
+	u8 res=0;
+	esp_12F_send_cmd("AT+CIPMUX=1","OK",100);
 	esp_12F_send_cmd("AT+CIPSERVER=0","OK",100);
 	sprintf((char*)p,"AT+CIPSERVER=1,%s",(u8*)portnum);
-	return esp_12F_send_cmd((u8*)portnum,"OK",100); 
+	if(esp_12F_send_cmd(p,"OK",100)) res=1;
+	return res; 
 }
 
 //检查wifi ssid是否存在
@@ -363,7 +387,8 @@ u8 change_port(u8* portnum)
 //    其他,没有这个wifi
 u8* chech_ssid(u8* ssid)
 {
-	esp_12F_send_cmd("AT+CWLAP","OK",5000);
-	while(esp_12F_check_cmd("OK"));
-	return esp_12F_check_cmd(ssid));
+	esp_12F_send_cmd("AT+CWLAP","+CWLAP:",5000);
+	while(esp_12F_check_cmd("OK")){delay_ms(10);wifiUSART_RX_STA=0;};
+//	esp_12F_at_response(1);  //输出扫描到的信息wifi
+	return esp_12F_check_cmd(ssid);
 }

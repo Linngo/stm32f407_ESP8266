@@ -19,7 +19,7 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	while(esp_12F_send_cmd("AT+CWMODE=1","OK",500))
 	{i++;if(i>20) {res=1;goto re;}};		//设置WIFI STA模式
 	
-	if(!chech_ssid(ssid)) goto re;
+//	if(!chech_ssid((u8*)ssid)) goto re;		//验证ssid是否存在
 	
 	sprintf((char*)p,"AT+CWJAP=\"%s\",\"%s\"",ssid,password);//设置无线参数:ssid,密码
 	while(esp_12F_send_cmd(p,"WIFI GOT IP",5000))
@@ -27,6 +27,8 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	delay_ms(100);
 	while(esp_12F_send_cmd("AT+CWAUTOCONN=1","OK",1000))
 	{i++;if(i>20) {res=1;goto re;}};			//上电自动连接wifi
+	
+	wifiUSART_RX_STA=0;
 
 	myfree(SRAMIN,p);
 re:	

@@ -46,10 +46,10 @@ void USART2_IRQHandler(void)
 		clear = USART2->SR;
 		clear = USART2->DR;
 #ifdef DMA_RX		
-		DMA_Cmd(DMA1_Stream5,DISABLE);
-		wifiUSART_RX_STA = RECE_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Stream5); 
+		DMA_Cmd(DMA1_Stream5,DISABLE); 
 		if((wifiUSART_RX_STA&(1<<15))==0)         //允许接收新数据到wifiUSART_RX_BUF
 		{	
+			wifiUSART_RX_STA = RECE_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Stream5);
 			if(wifiUSART_RX_STA>(1460+16)) wifiUSART_RX_STA=1476;
 			memcpy(wifiUSART_RX_BUF,ReceiveBuff,wifiUSART_RX_STA);	
 		}

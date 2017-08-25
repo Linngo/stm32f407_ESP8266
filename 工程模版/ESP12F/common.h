@@ -32,7 +32,7 @@ u8 esp_12F_consta_check(void);			  //wifi连接状态
 void esp_12F_get_staip(u8* ipbuf);        //获取本地ip
 
 //检查wifi ssid是否存在
-u8* chech_ssid(u8* ssid)
+u8* chech_ssid(u8* ssid);
 
 void esp_12F_ap_config(void);			//配置AP
 void esp_12F_msg(void);					  //模块固件信息
