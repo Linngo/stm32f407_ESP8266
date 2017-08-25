@@ -63,7 +63,7 @@ _SS
 		{
 			if(esp_12F_check_cmd("DISCONNECT"))
 			{printf("wifi连接断开\r\n");goto RET;}
-			if(esp_12F_check_cmd("WIFI CONNECTED")||esp_12F_check_cmd("WIFI GOT IP"))
+			if(esp_12F_check_cmd("WIFI"))
 			{printf("wifi连接\r\n");	goto RET;}
 			
 			printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
@@ -88,7 +88,6 @@ RET:
 			wifiUSART_RX_STA=0;				//允许新数据
 		}
 		WaitX(1);
-//		delay_ms(10);
 		if(esp_12F_check_cmd("+IPD,"))		//接收到一次数据了
 		{ 			
 			p=(u8 *)strstr((const char*)wifiUSART_RX_BUF,",");
