@@ -18,7 +18,9 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 
 	while(esp_12F_send_cmd("AT+CWMODE=1","OK",500))
 	{i++;if(i>20) {res=1;goto re;}};		//设置WIFI STA模式
-
+	
+	if(!chech_ssid(ssid)) goto re;
+	
 	sprintf((char*)p,"AT+CWJAP=\"%s\",\"%s\"",ssid,password);//设置无线参数:ssid,密码
 	while(esp_12F_send_cmd(p,"WIFI GOT IP",5000))
 	{i++;if(i>20) {res=1;goto re;}};			//连接目标路由器,并且获得IP

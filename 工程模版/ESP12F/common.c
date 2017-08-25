@@ -111,7 +111,7 @@ u8 esp_12F_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
 		}
 		if(waittime==0)
 		{
-			printf("%s判断超时\r\n",cmd);
+			printf("%s 响应超时\r\n",cmd);
 			res=1;
 		} 
 	}
@@ -356,4 +356,14 @@ u8 change_port(u8* portnum)
 	esp_12F_send_cmd("AT+CIPSERVER=0","OK",100);
 	sprintf((char*)p,"AT+CIPSERVER=1,%s",(u8*)portnum);
 	return esp_12F_send_cmd((u8*)portnum,"OK",100); 
+}
+
+//检查wifi ssid是否存在
+//返回值:0,wifi存在
+//    其他,没有这个wifi
+u8* chech_ssid(u8* ssid)
+{
+	esp_12F_send_cmd("AT+CWLAP","OK",5000);
+	while(esp_12F_check_cmd("OK"));
+	return esp_12F_check_cmd(ssid));
 }
