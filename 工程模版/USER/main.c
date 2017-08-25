@@ -142,7 +142,6 @@ while(1){
 			esp_12F_quit_trans();
 		else
 			esp_12F_send_cmd((u8 *)a,(u8 *)b,number);
-		esp_12F_at_response(0);
 		wifiUSART_RX_STA=0;
 	}
 	WaitX(1);

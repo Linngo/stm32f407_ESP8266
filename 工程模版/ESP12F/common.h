@@ -14,6 +14,16 @@
 #define tcp 1
 #define server 2
 
+typedef struct
+{
+	u8 version[40]; //固件版本
+	u8 netmode;		//网络模式
+	u8 apssid[40];  //ap ssid
+	u8 ap_passwd[20];//ap 密码
+	u8 apch[3];		//ap 信道
+	u8 apecn;		//ap 加密模式
+}Esp_msg;
+
 u8 esp_12F_init(void);
 
 void esp_12F_at_response(u8 mode);        //打印log信息

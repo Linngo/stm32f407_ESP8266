@@ -17,8 +17,6 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	while(esp_12F_send_cmd("AT+CWMODE=1","OK",500))
 	{i++;if(i>20) {res=1;goto re;}};		//设置WIFI STA模式
 	
-//	if(!chech_ssid((u8*)ssid)) goto re;		//验证ssid是否存在
-	
 	sprintf((char*)p,"AT+CWJAP=\"%s\",\"%s\"",ssid,password);//设置无线参数:ssid,密码
 	while(esp_12F_send_cmd(p,"WIFI GOT IP",5000))
 	{i++;if(i>20) {res=1;goto re;}};			//连接目标路由器,并且获得IP
@@ -46,10 +44,9 @@ u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum)
 	u8 *p=NULL;
 	u8 res=0;
 	
+	//		printf("正在配置模块,请稍等...");
 	if(netpro==0)   //UDP
 	{
-//		printf("WIFI-STA udp mode\r\n"); 
-//		printf("正在配置模块,请稍等...");
 		sprintf((char*)p,"AT+CIPSTART=\"UDP\",\"%s\",%s",ipbuf,(u8*)portnum);    //配置目标UDP服务器
 		delay_ms(200);
 		esp_12F_send_cmd("AT+CIPMUX=0","OK",20);  //单链接模式
@@ -58,21 +55,17 @@ u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum)
 	}
 	else     //TCP
 	{ 
-//		printf("正在配置模块,请稍等...\r\n");
 		if(netpro==1)     //TCP Client    透传模式测试
 		{
-//			printf("WIFI-STA tcp_client mode\r\n");
 			esp_12F_send_cmd("AT+CIPMUX=0","OK",20);   //0：单连接
 			sprintf((char*)p,"AT+CIPSTART=\"TCP\",\"%s\",%s",ipbuf,(u8*)portnum);    //配置目标TCP服务器
 			while(esp_12F_send_cmd(p,"OK",200))
 			{
 //				printf("连接TCP失败"); //连接失败	 
-			}	
-	//		esp_12F_send_cmd("AT+CIPMODE=1","OK",200);      //传输模式为：透传			
+			}		
 		}
-		else					//TCP Server
+		else			//TCP Server
 		{
-//			printf("WIFI-STA tcp_server mode\r\n");
 			esp_12F_send_cmd("AT+CIPMUX=1","OK",50);   //1：多连接
 			delay_ms(50);
 			sprintf((char*)p,"AT+CIPSERVER=1,%s",(u8*)portnum);    //开启Server模式(0，关闭；1，打开)，端口号为portnum

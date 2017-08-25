@@ -55,15 +55,15 @@ u8 esp_12F_init(void)
 //将收到的AT指令应答数据返回给电脑串口   打印debug信息
 //mode:0,不清零wifiUSART_RX_STA;
 //     1,清零wifiUSART_RX_STA;
-void esp_12F_at_response(u8 mode)
-{
-	if(wifiUSART_RX_STA&0X8000)		//接收到一次数据了
-	{ 
-		wifiUSART_RX_BUF[wifiUSART_RX_STA&0X7FFF]=0;//添加结束符
+//void esp_12F_at_response(u8 mode)
+//{
+//	if(wifiUSART_RX_STA&0X8000)		//接收到一次数据了
+//	{ 
+//		wifiUSART_RX_BUF[wifiUSART_RX_STA&0X7FFF]=0;//添加结束符
 //		printf("%s",wifiUSART_RX_BUF);	//发送到串口
-		if(mode)wifiUSART_RX_STA=0;
-	} 
-}
+//		if(mode)wifiUSART_RX_STA=0;
+//	} 
+//}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                       esp12f AT指令操作驱动
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -281,7 +281,7 @@ void esp_12F_ap_config(void)
 void esp_12F_msg(void)
 {
 	u8 *p=NULL,*p1=NULL,*p2=NULL;
-
+	
 	esp_12F_send_cmd("AT+GMR","OK",20);		//获取固件版本号
 	p=esp_12F_check_cmd("SDK version:");    
 	p1=(u8*)strstr((const char*)(p+1),"\r\n");
