@@ -59,9 +59,13 @@ _SS
 		
 	while(1)
 	{
-		if(esp_12F_check_cmd("CONNECT")
-				&&(!esp_12F_check_cmd("DISCONNECT")))   //收到设备连接信息
+		if(esp_12F_check_cmd("CONNECT"))   //收到设备连接信息
 		{
+			if(esp_12F_check_cmd("DISCONNECT"))
+			{printf("wifi连接断开\r\n");goto RET;}
+			if(esp_12F_check_cmd("WIFI CONNECTED"))
+			{printf("wifi连接\r\n");	goto RET;}
+			
 			printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
 			sprintf((char*)p,"AT+CIPSENDEX=%c,20",wifiUSART_RX_BUF[0]);
 			esp_12F_send_cmd(p,"\r\n> ",1000);	//发送命令
@@ -74,8 +78,9 @@ _SS
 				overtime++;
 				if(overtime>20){overtime=0;break;}
 			}
-			wifiUSART_RX_STA=0;				//允许新数据
 			t=0;
+RET:			
+			wifiUSART_RX_STA=0;				//允许新数据
 		}
 		if(esp_12F_check_cmd("CLOSED"))		//收到设备断开信息
 		{
