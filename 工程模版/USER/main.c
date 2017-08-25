@@ -96,7 +96,6 @@ RET:
 			p1=(u8 *)strstr((const char*)(p+3),":");
 			p1[0]=0;
 			printf("收到客户端%s 数据%s字节,内容:\r\n%s\r\n",p+1,p+3,p1+1);
-//			printf("收到客户端%s 数据%s字节\r\n",p+1,p+3);
 			wifiUSART_RX_STA=0;				//允许新数据
 			t=0;
 		}
