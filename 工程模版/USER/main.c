@@ -52,8 +52,8 @@ static u8 constate=0;	//连接状态
 static u8 overtime=0;
 
 _SS	
-	p=mymalloc(SRAMIN,32);
-	p1=mymalloc(SRAMIN,32);
+	//p=mymalloc(SRAMIN,32);
+	//p1=mymalloc(SRAMIN,32);
 	
 	printf("%s测试\r\n",esp_12F_WORKMODE_TBL[netpro-1]);
 		
@@ -119,8 +119,8 @@ RET:
 			}
 		}
 	}
-	myfree(SRAMIN,p);		//释放内存 
-	myfree(SRAMIN,p1);	
+	//myfree(SRAMIN,p);		//释放内存 
+	//myfree(SRAMIN,p1);	
 //_EE
 	;}; return 0;
 }

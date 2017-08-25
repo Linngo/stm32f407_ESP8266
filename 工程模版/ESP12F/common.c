@@ -264,7 +264,7 @@ void esp_12F_ap_config(void)
 {
 	u8 *p=NULL;
 	
-	p=mymalloc(SRAMIN,32);							//申请32字节内存
+	//p=mymalloc(SRAMIN,32);							//申请32字节内存
 	
 	printf("ssid:%s passwd:%s ch:%d ecn:%s max_link:%d\r\n",ap_ssid,ap_password,ap_channel,esp_12F_ECN[ap_encryption],ap_max_conn);
 	
@@ -279,16 +279,16 @@ void esp_12F_ap_config(void)
 	
 	wifiUSART_RX_STA=0;
 	
-	myfree(SRAMIN,p);		//释放内存 
+	//myfree(SRAMIN,p);		//释放内存 
 }
 
 //esp_12F模块信息
 void esp_12F_msg(void)
 {
 	u8 *p=NULL,*p1=NULL,*p2=NULL;
-	p=mymalloc(SRAMIN,32);							//申请32字节内存
-	p1=mymalloc(SRAMIN,32);							//申请32字节内存
-	p2=mymalloc(SRAMIN,32);							//申请32字节内存
+	//p=mymalloc(SRAMIN,32);							//申请32字节内存
+	//p1=mymalloc(SRAMIN,32);							//申请32字节内存
+	//p2=mymalloc(SRAMIN,32);							//申请32字节内存
 
 	esp_12F_send_cmd("AT+GMR","OK",20);		//获取固件版本号
 	p=esp_12F_check_cmd("SDK version:");    
@@ -317,9 +317,9 @@ void esp_12F_msg(void)
 	printf("加密方式:%s\r\n",(u8*)esp_12F_ECN[*(p1+1)-'0']);
 	wifiUSART_RX_STA=0;
 	
-	myfree(SRAMIN,p);		//释放内存 
-	myfree(SRAMIN,p1);		//释放内存 
-	myfree(SRAMIN,p2);		//释放内存 
+	//myfree(SRAMIN,p);		//释放内存 
+	//myfree(SRAMIN,p1);		//释放内存 
+	//myfree(SRAMIN,p2);		//释放内存 
 }
 
 //初始化智能配网功能

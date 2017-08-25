@@ -12,7 +12,7 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	u8 res=0;
 	u8 i=0;
 	
-	p=mymalloc(SRAMIN,32);
+	//p=mymalloc(SRAMIN,32);
 	
 	printf("无线参数为:%s,%s,%s\r\n",(u8*)ssid,(u8*)sta_encryption,(u8*)password);
 
@@ -30,7 +30,7 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	
 	wifiUSART_RX_STA=0;
 
-	myfree(SRAMIN,p);
+	//myfree(SRAMIN,p);
 re:	
 	return res;
 }
@@ -49,7 +49,7 @@ u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum)
 	u8 *p=NULL;
 	u8 res=0;
 
-	p=mymalloc(SRAMIN,32);							//申请32字节内存
+	//p=mymalloc(SRAMIN,32);							//申请32字节内存
 	
 	if(netpro==0)   //UDP
 	{
@@ -92,6 +92,6 @@ u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum)
 	
 	wifiUSART_RX_STA=0;
 
-	myfree(SRAMIN,p);		//释放内存 	
+	//myfree(SRAMIN,p);		//释放内存 	
 	return res;		
 }
