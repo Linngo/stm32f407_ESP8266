@@ -110,7 +110,7 @@ RET:
 				if(constate=='3')
 					printf("10分钟未收到客户端信息\r\n");  
 				if(constate=='4')
-					printf("无TCP连接\r\n"); 
+					printf("10分钟无TCP连接\r\n"); 
 				if(constate=='5')
 					printf("未连接网络\r\n"); 
 //				esp_12F_send_cmd("AT+CIPSERVER=0","OK",50); //关闭服务器
