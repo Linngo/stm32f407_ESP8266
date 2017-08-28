@@ -76,9 +76,11 @@ _SS
 				wifiUSART_RX_STA=0;
 				delay_ms(10);
 				overtime++;
-				if(overtime>20){overtime=0;continue;}
+				if(overtime>30)
+					break;
 			}
 			t=0;
+			overtime=0;
 RET:			
 			wifiUSART_RX_STA=0;				//允许新数据
 		}
@@ -87,7 +89,6 @@ RET:
 			printf("客户端%c 断开TCP服务器\r\n",wifiUSART_RX_BUF[0]);
 			wifiUSART_RX_STA=0;				//允许新数据
 		}
-		WaitX(1);
 		if(esp_12F_check_cmd("+IPD,"))		//接收到一次数据了
 		{ 			
 			p=(u8 *)strstr((const char*)wifiUSART_RX_BUF,",");
@@ -98,6 +99,7 @@ RET:
 			wifiUSART_RX_STA=0;				//允许新数据
 			t=0;
 		}
+		WaitX(1); //10ms 释放CPU
 		if(wifiUSART_RX_STA==0)
 		{	if(t<60000)
 			{	t++;
