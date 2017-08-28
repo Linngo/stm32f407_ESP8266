@@ -71,8 +71,8 @@ void DMA_IRQ_init(void)
 	NVIC_InitTypeDef NVIC_InitStructure;
 #ifdef DMA_IRQRX
 	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream5_IRQn;  //接收中断  
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;    
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;    
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;    
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;    
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;    
     NVIC_Init(&NVIC_InitStructure); 
 	DMA_ITConfig(DMA1_Stream5,DMA_IT_TC,ENABLE);        //开完成中断
@@ -91,16 +91,22 @@ void DMA_IRQ_init(void)
 ////DMA 接收中断处理
 void DMA1_Stream5_IRQHandler(void)  
 {  
-    //清除标志  
-    if(DMA_GetFlagStatus(DMA1_Stream5,DMA_FLAG_TCIF5)!=RESET)//等待DMA传输完成  
+	//清除标志  
+	if(DMA_GetFlagStatus(DMA1_Stream5,DMA_FLAG_TCIF5)!=RESET)//等待DMA传输完成  
 	{   
 		DMA_Cmd(DMA1_Stream5,DISABLE);
-		if((wifiUSART_RX_STA&(1<<15))==0)
-			memcpy(wifiUSART_RX_BUF,ReceiveBuff,wifiUSART_MAX_RECV_LEN);
-        DMA_ClearFlag(DMA1_Stream5,DMA_FLAG_TCIF5);//清除DMA传输完成标志  
+		
+		if((wifiUSART_RX_STA&(1<<15))==0)         //允许接收新数据到wifiUSART_RX_BUF
+		{	
+			wifiUSART_RX_STA = RECE_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Stream5);
+			wifiUSART_RX_STA=RECE_BUF_SIZE;
+			memcpy(wifiUSART_RX_BUF,ReceiveBuff,wifiUSART_RX_STA);	
+		}
+		
+		DMA_ClearFlag(DMA1_Stream5,DMA_FLAG_TCIF5);//清除DMA传输完成标志  
 		DMA_SetCurrDataCounter(DMA1_Stream5, RECE_BUF_SIZE);  
-        DMA_Cmd(DMA1_Stream5,ENABLE);     //打开DMA,
-    }  
+		DMA_Cmd(DMA1_Stream5,ENABLE);     //打开DMA,
+	}  
 } 
 #endif
 

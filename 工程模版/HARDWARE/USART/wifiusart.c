@@ -50,12 +50,17 @@ void USART2_IRQHandler(void)
 		if((wifiUSART_RX_STA&(1<<15))==0)         //允许接收新数据到wifiUSART_RX_BUF
 		{	
 			wifiUSART_RX_STA = RECE_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Stream5);
-			if(wifiUSART_RX_STA>(1460+16)) wifiUSART_RX_STA=1476;
+			if(wifiUSART_RX_STA>(RECE_BUF_SIZE)) wifiUSART_RX_STA=RECE_BUF_SIZE;
 			memcpy(wifiUSART_RX_BUF,ReceiveBuff,wifiUSART_RX_STA);	
 		}
 		DMA_ClearFlag(DMA1_Stream5,DMA_FLAG_TCIF5);//清除DMA1_Steam5传输完成标志  
 		DMA_SetCurrDataCounter(DMA1_Stream5, RECE_BUF_SIZE);  
 		DMA_Cmd(DMA1_Stream5,ENABLE);     //打开DMA,
+		if(wifiUSART_RX_STA==RECE_BUF_SIZE){ //数据超长 多接收一帧处理
+				DMA_Cmd(DMA1_Stream5,DISABLE);
+				DMA_ClearFlag(DMA1_Stream5,DMA_FLAG_TCIF5);
+				DMA_SetCurrDataCounter(DMA1_Stream5, RECE_BUF_SIZE);
+				DMA_Cmd(DMA1_Stream5,ENABLE);}
 #endif		
 		wifiUSART_RX_STA|=1<<15;
 	}										 
@@ -105,7 +110,7 @@ void wifiUSART_init(u32 bound)
 
 	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=2 ;//抢占优先级2
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;		//子优先级3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;		//子优先级3
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
 	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器
 

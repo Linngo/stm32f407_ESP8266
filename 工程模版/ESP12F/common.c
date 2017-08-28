@@ -103,7 +103,7 @@ u8 esp_12F_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
 			{
 				if(esp_12F_check_cmd(ack)) 
 				{
-//					esp_12F_at_response(0);
+			//		esp_12F_at_response(0);
 					break;
 				}//得到有效数据 
 				wifiUSART_RX_STA=0;
@@ -112,35 +112,6 @@ u8 esp_12F_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
 		if(waittime==0)
 		{
 			printf("%s 响应超时\r\n",cmd);
-			res=1;
-		} 
-	}
-	return res;
-} 
-
-u8 esp_12F_send_data(u8 *cmd,u8 *ack,u16 waittime)
-{
-	u8 res=0; 
-	wifiUSART_RX_STA=0;
-	u3_printf("%s",cmd);	//发送命令
-	if(ack&&waittime)		//需要等待应答
-	{
-		while(--waittime)	//等待倒计时
-		{
-			delay_ms(1);
-			if(wifiUSART_RX_STA&0X8000)//接收到期待的应答结果
-			{
-				if(esp_12F_check_cmd(ack)) 
-				{
-				 //esp_12F_at_response(0);
-					break;
-				}//得到有效数据 
-				wifiUSART_RX_STA=0;
-			}
-		}
-		if(waittime==0)
-		{
-			printf("%s  超时\r\n",cmd);
 			res=1;
 		} 
 	}
@@ -247,7 +218,7 @@ u8 esp_12F_consta_check(void)
 void esp_12F_get_staip(u8* ipbuf)
 {
 	u8 *p=NULL,*p1=NULL;
-	if(esp_12F_send_cmd("AT+CIPSTA?","OK",50))//获取IP地址失败
+	if(esp_12F_send_cmd("AT+CIPSTA?","OK",200))//获取IP地址失败
 	{
 		ipbuf[0]=0;
 		return;
@@ -255,7 +226,7 @@ void esp_12F_get_staip(u8* ipbuf)
 	p=esp_12F_check_cmd("\"");
 	p1=(u8*)strstr((const char*)(p+1),"\"");
 	*p1=0;
-	sprintf((char*)ipbuf,"%s",p+1);		
+	sprintf((char*)ipbuf,"%s",p+1);	
 	wifiUSART_RX_STA=0;
 }
 
@@ -391,4 +362,32 @@ u8* chech_ssid(u8* ssid)
 	while(esp_12F_check_cmd("OK")){delay_ms(10);wifiUSART_RX_STA=0;};
 //	esp_12F_at_response(1);  //输出扫描到的信息wifi
 	return esp_12F_check_cmd(ssid);
+}
+
+//TCP发送信息
+//返回值：0 成功
+//		1 失败
+u8 tcp_send(u8 id,u8* data,u8 len)
+{
+	u8 overtime=0;
+	u8 res=0;
+	u8* p=NULL;
+	
+	sprintf((char*)p,"AT+CIPSENDEX=%d,%d",id,len);
+	esp_12F_send_cmd(p,"\r\n> ",1000);	//发送命令
+	wifiUSART_RX_STA=0;
+	u3_printf("%s\\0",data);//测试数据
+	while(!esp_12F_check_cmd("SEND OK"))					//等待发送完成
+	{
+		wifiUSART_RX_STA=0;
+		delay_ms(10);
+		overtime++;
+		if(overtime>30)
+		{	
+			res=1;
+			break;
+		}
+	}
+	wifiUSART_RX_STA=0;
+	return res;
 }

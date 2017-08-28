@@ -7,6 +7,7 @@
 #define send 1
 #define rev 0
 #define DMA_IRQTX 			1					//0,不接收;1,接收.
+//#define DMA_IRQRX
 
 #define SEND_BUF_SIZE 100	//100 byte
 #define RECE_BUF_SIZE 1476  //  模块一次接收的数据长度4k
