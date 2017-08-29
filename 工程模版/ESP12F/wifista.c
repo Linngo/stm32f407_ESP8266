@@ -137,10 +137,8 @@ u8 wifi_callback(void)
 			wifi.LinkId = (p+1)[0]-48;
 			wifi.RxDataLen = atoi((char*)p+3);
 			memcpy(wifi.Rxdata,p1+1,wifi.RxDataLen);
-			wifi.Rxdata[wifi.RxDataLen] = 0;
-			
+			wifi.Rxdata[wifi.RxDataLen] = 0;			
 	//		printf("收到客户端%d 数据%d字节,内容:\r\n%s\r\n",wifi.LinkId,wifi.RxDataLen,wifi.Rxdata);
-
 			wifiUSART_RX_STA=0;				//允许新数据
 			return 1;
 		}

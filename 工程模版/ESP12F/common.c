@@ -378,7 +378,7 @@ u8 tcp_send(u8 id,u8* data,u8 len)
 		wifiUSART_RX_STA=0;
 		delay_ms(10);
 		overtime++;
-		if(overtime>300)
+		if(overtime>250)
 		{	
 			res=1;
 			break;
