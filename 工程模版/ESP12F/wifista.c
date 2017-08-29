@@ -21,8 +21,10 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	
 	wifi.Mode=Station;
 //	if(!chech_ssid((u8*)ssid)) goto re;		//验证ssid是否存在
-	
+
 	sprintf((char*)p,"AT+CWJAP=\"%s\",\"%s\"",ssid,password);//设置无线参数:ssid,密码
+	//sprintf((char*)p,"AT+CWJAP_CUR=\"%s\",\"%s\",\"%s\"\r\n",ssid,password,MAC);
+
 	while(esp_12F_send_cmd(p,"WIFI GOT IP",5000))
 	{i++;if(i>20) {res=1;goto re;}};			//连接目标路由器,并且获得IP
 	delay_ms(100);
@@ -97,7 +99,7 @@ u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum)
 	return res;		
 }
 //接收数据
-//返回值: 0 其他
+//返回值: 0 其他模块响应
 //		1 接收到一次数据
 u8 wifi_callback(void)
 {
