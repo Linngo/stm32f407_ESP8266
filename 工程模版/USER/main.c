@@ -43,7 +43,7 @@ _SS
 		}
 ;};
 }
-//测试TCP、udp通信
+//测试TCP通信
 u8 test_sta(u8 netpro)
 {
 static u8 *p=NULL;
@@ -59,52 +59,55 @@ _SS
 		
 	while(1)
 	{
-		if(esp_12F_check_cmd("CONNECT"))   //收到设备连接信息
+		if(wifiUSART_RX_STA>>15==1)
 		{
-			if(esp_12F_check_cmd("DISCONNECT"))
-			{	
-				wifi.status = Wifi_ConnectionFail;
-				printf("wifi连接断开\r\n");
-				goto RET;
-			}
-			if(esp_12F_check_cmd("WIFI"))
+			if(esp_12F_check_cmd("CONNECT"))   //收到设备连接信息
 			{
-				wifi.status = Wifi_Connected;
-				printf("wifi连接\r\n");	
-				goto RET;
-			}
-			
-			wifi.status = TCP_Connected;
-			printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
-			
-			tcp_send(wifiUSART_RX_BUF[0]-48,"tcp_server_test\r\n",20);
+				if(esp_12F_check_cmd("DISCONNECT"))
+				{	
+					wifi.status = Wifi_ConnectionFail;
+					printf("wifi连接断开\r\n");
+					goto RET;
+				}
+				if(esp_12F_check_cmd("WIFI"))
+				{
+					wifi.status = Wifi_Connected;
+					printf("wifi连接\r\n");	
+					goto RET;
+				}		
+				wifi.TcpIpConnections[wifiUSART_RX_BUF[0]-48].status = TCP_Connected;
+				printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
+				
+				tcp_send(wifiUSART_RX_BUF[0]-48,"tcp_server_test\r\n",20);
 
-			t=0;
-RET:			
-			wifiUSART_RX_STA=0;				//允许新数据
-		}
-		if(esp_12F_check_cmd("CLOSED"))		//收到设备断开信息
-		{
-			wifi.status = TCP_Disconnected;
-			printf("客户端%c 断开TCP服务器\r\n",wifiUSART_RX_BUF[0]);
-			wifiUSART_RX_STA=0;				//允许新数据
-		}
-		if(esp_12F_check_cmd("+IPD,"))		//接收到一次数据了
-		{ 			
-			wifi.RxIsData=1;
-			p=(u8 *)strstr((const char*)wifiUSART_RX_BUF,",");
-			p[2]=0;
-			p1=(u8 *)strstr((const char*)(p+3),":");
-			p1[0]=0;
-			
-			wifi.LinkId = (p+1)[0]-48;
-			wifi.RxDataLen = atoi((char*)p+3);
-			memcpy(wifi.Rxdata,p1+1,wifi.RxDataLen);
-			wifi.Rxdata[wifi.RxDataLen] = 0;
-			
-			printf("收到客户端%d 数据%d字节,内容:\r\n%s\r\n",wifi.LinkId,wifi.RxDataLen,wifi.Rxdata);
-			wifiUSART_RX_STA=0;				//允许新数据
-			t=0;
+				t=0;
+	RET:			
+				wifiUSART_RX_STA=0;				//允许新数据
+			}
+			if(esp_12F_check_cmd("CLOSED"))		//收到设备断开信息
+			{
+				wifi.TcpIpConnections[wifiUSART_RX_BUF[0]-48].status = TCP_Disconnected;
+				printf("客户端%c 断开TCP服务器\r\n",wifiUSART_RX_BUF[0]);
+				wifiUSART_RX_STA=0;				//允许新数据
+			}
+			if(esp_12F_check_cmd("+IPD,"))		//接收到一次数据了
+			{ 			
+				wifi.RxIsData=1;
+				p=(u8 *)strstr((const char*)wifiUSART_RX_BUF,",");
+				p[2]=0;
+				p1=(u8 *)strstr((const char*)(p+3),":");
+				p1[0]=0;
+				
+				wifi.LinkId = (p+1)[0]-48;
+				wifi.RxDataLen = atoi((char*)p+3);
+				memcpy(wifi.Rxdata,p1+1,wifi.RxDataLen);
+				wifi.Rxdata[wifi.RxDataLen] = 0;
+				
+				printf("收到客户端%d 数据%d字节,内容:\r\n%s\r\n",wifi.LinkId,wifi.RxDataLen,wifi.Rxdata);
+				wifiUSART_RX_STA=0;				//允许新数据
+				t=0;
+			}
+			wifiUSART_RX_STA=0;
 		}
 		WaitX(1); //10ms 释放CPU
 		if(wifiUSART_RX_STA==0)
@@ -178,8 +181,8 @@ int main(void)
 	esp_12F_setlink_mode(server,(const u8*)"240",portnum);
 	while(1)
 	{	
-		wifi_callback();
-//		{ if (timers[0]==0) {timers[0]=test_sta(3); continue;} }
+//		wifi_callback();
+		{ if (timers[0]==0) {timers[0]=test_sta(3); continue;} }
 		RunTaskA(taskled,1);
 		RunTaskA(test_AT,2);
 	};

@@ -47,7 +47,7 @@ u8 esp_12F_init(void)
 		delay_ms(10);
 		if(i>20)
 		{
-			printf("wifi模块串口通信异常\r\n");
+//			printf("wifi模块串口通信异常\r\n");
 			return 1;
 		}
 	}
@@ -195,12 +195,6 @@ u8 esp_12F_apsta_check(void)
 	if(p)return p[7]-48;
 	else return 1;
 }
-/*{
-	u8 *p; 
-	esp_12F_send_cmd("AT+CIPSTATUS","OK",20);	//获取WIFI STA连接状态
-	p=esp_12F_check_cmd("+CIPSTATUS:");
-	return p[12];
-}*/
 //获取esp_12F模块的连接状态
 //返回值:0,wifi连接正常;
 //      1,wifi未连接.
@@ -252,6 +246,7 @@ void esp_12F_ap_config(void)
 }
 
 //esp_12F模块信息
+/*
 void esp_12F_msg(void)
 {
 	u8 *p=NULL,*p1=NULL,*p2=NULL;
@@ -290,7 +285,7 @@ void esp_12F_msg(void)
 	myfree(SRAMIN,p1);		//释放内存 
 	myfree(SRAMIN,p2);		//释放内存 
 }
-
+*/
 //初始化智能配网功能
 void set_ESP(void)
 {
@@ -313,7 +308,7 @@ u8 wifi_ESP(void)
 	u16 i=0;
 ESP:	
 	set_ESP();
-	printf("等待smartconfig 配置wifi账号密码\r\n");
+//	printf("等待smartconfig 配置wifi账号密码\r\n");
 	while(!(esp_12F_check_cmd("WIFI CONNECT")
 			||esp_12F_check_cmd("WIFI GOT IP")))
 	{
@@ -322,19 +317,19 @@ ESP:
 		i++;
 		if(i%6000==0)
 		{
-			printf("等待smartconfig 配置wifi账号密码\r\n");
+//			printf("等待smartconfig 配置wifi账号密码\r\n");
 			stop_ESP();
 			goto ESP;
 		}
 		if(i>60000)
 		{
-			printf("smartconfig失败\r\n");
+//			printf("smartconfig失败\r\n");
 			stop_ESP();
 			i=0;
 			return 1;
 		}
 	}
-	printf("smartconfig成功\r\n");
+//	printf("smartconfig成功\r\n");
 	stop_ESP();
 	return 0;
 }

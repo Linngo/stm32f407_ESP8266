@@ -39,15 +39,12 @@ typedef enum					//wifi加密模式 softAP使用
 	WPA_WPA2_PSK         =     4,
 }WifiEncryptionType_t;
 
-typedef struct						//TCP连接相关
+typedef struct
 {
 	WifiStatus_t		   status;
-	u8                     LinkId;
-	char                   Type[4];
 	char                   RemoteIp[17];
 	u16                    RemotePort;
-	u16                    LocalPort;
-	u8                   RunAsServer;    
+	u16                    LocalPort;  
 }WifiConnection_t;
 //###################################################################################################
 typedef struct
@@ -58,19 +55,13 @@ typedef struct
 	u16                      RxDataLen;				//数据长度
 	u8                     	 RxIsData;  
 	u8                       GotNewData;
-	WifiStatus_t		    status;					//网络状态
-	
+	WifiStatus_t		     status;				//网络状态	
 	//----------------参数			
 	WifiMode_t               Mode;
 	char                     MyIP[16];	
 	char                     MyGateWay[16];
-	//----------------Station
-	u8                     StationDhcp;
-	char                     StationIp[16];	
-	//----------------TcpIp
-	u8                     TcpIpMultiConnection;
-	u16                      TcpIpPingAnswer;
-	WifiConnection_t         TcpIpConnections[5];        //TCP允许5个连接
+	//----------------Tcp设备
+	WifiConnection_t         TcpIpConnections[5];    //5个连接TCP客户端信息
 	//----------------
 }Wifi_t;
 
