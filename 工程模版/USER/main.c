@@ -4,6 +4,7 @@
 #include "wifiusart.h"
 #include "timer.h"
 #include "common.h"
+#include <stdlib.h>
 
 void toInt(char *str,u16 *number)//字符串转数字
 {
@@ -49,7 +50,6 @@ static u8 *p=NULL;
 static u8 *p1=NULL;
 static u16 t=0;		//加速第一次获取链接状态
 static u8 constate=0;	//连接状态
-static u8 overtime=0;
 
 _SS	
 	p=mymalloc(SRAMIN,32);
@@ -62,40 +62,47 @@ _SS
 		if(esp_12F_check_cmd("CONNECT"))   //收到设备连接信息
 		{
 			if(esp_12F_check_cmd("DISCONNECT"))
-			{printf("wifi连接断开\r\n");goto RET;}
-			if(esp_12F_check_cmd("WIFI"))
-			{printf("wifi连接\r\n");	goto RET;}
-			
-			printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
-			sprintf((char*)p,"AT+CIPSENDEX=%c,20",wifiUSART_RX_BUF[0]);
-			esp_12F_send_cmd(p,"\r\n> ",1000);	//发送命令
-			wifiUSART_RX_STA=0;
-			u3_printf("%s测试\r\n\\0",esp_12F_WORKMODE_TBL[netpro-1]);//测试数据
-			while(!esp_12F_check_cmd("SEND OK"))					//等待发送完成
-			{
-				wifiUSART_RX_STA=0;
-				delay_ms(10);
-				overtime++;
-				if(overtime>30)
-					break;
+			{	
+				wifi.status = Wifi_ConnectionFail;
+				printf("wifi连接断开\r\n");
+				goto RET;
 			}
+			if(esp_12F_check_cmd("WIFI"))
+			{
+				wifi.status = Wifi_Connected;
+				printf("wifi连接\r\n");	
+				goto RET;
+			}
+			
+			wifi.status = TCP_Connected;
+			printf("客户端%c 连上TCP服务器\r\n",wifiUSART_RX_BUF[0]);
+			
+			tcp_send(wifiUSART_RX_BUF[0]-48,"tcp_server_test\r\n",20);
+
 			t=0;
-			overtime=0;
 RET:			
 			wifiUSART_RX_STA=0;				//允许新数据
 		}
 		if(esp_12F_check_cmd("CLOSED"))		//收到设备断开信息
 		{
+			wifi.status = TCP_Disconnected;
 			printf("客户端%c 断开TCP服务器\r\n",wifiUSART_RX_BUF[0]);
 			wifiUSART_RX_STA=0;				//允许新数据
 		}
 		if(esp_12F_check_cmd("+IPD,"))		//接收到一次数据了
 		{ 			
+			wifi.RxIsData=1;
 			p=(u8 *)strstr((const char*)wifiUSART_RX_BUF,",");
 			p[2]=0;
 			p1=(u8 *)strstr((const char*)(p+3),":");
 			p1[0]=0;
-			printf("收到客户端%s 数据%s字节,内容:\r\n%s\r\n",p+1,p+3,p1+1);
+			
+			wifi.LinkId = (p+1)[0]-48;
+			wifi.RxDataLen = atoi((char*)p+3);
+			memcpy(wifi.Rxdata,p1+1,wifi.RxDataLen);
+			wifi.Rxdata[wifi.RxDataLen] = 0;
+			
+			printf("收到客户端%d 数据%d字节,内容:\r\n%s\r\n",wifi.LinkId,wifi.RxDataLen,wifi.Rxdata);
 			wifiUSART_RX_STA=0;				//允许新数据
 			t=0;
 		}
@@ -106,22 +113,20 @@ RET:
 			}else
 			{	
 				constate=esp_12F_apsta_check();//得到连接状态
-				if(constate=='2')
+				if(constate==Wifi_Connected)
 					printf("网络正常,未建立TCP连接\r\n"); 
-				if(constate=='3')
+				if(constate==TCP_Connected)
 					printf("10分钟未收到客户端信息\r\n");  
-				if(constate=='4')
+				if(constate==TCP_Disconnected)
 					printf("10分钟无TCP连接\r\n"); 
-				if(constate=='5')
+				if(constate==Wifi_ConnectionFail)
 					printf("未连接网络\r\n"); 
-//				esp_12F_send_cmd("AT+CIPSERVER=0","OK",50); //关闭服务器
 				t=0;
 				break;
 			}
 		}
 	}
-	myfree(SRAMIN,p);		//释放内存 
-	myfree(SRAMIN,p1);	
+ 
 //_EE
 	;}; return 0;
 }
@@ -173,8 +178,8 @@ int main(void)
 	esp_12F_setlink_mode(server,(const u8*)"240",portnum);
 	while(1)
 	{	
-		//RunTaskA(test_sta(3),0);
-		{ if (timers[0]==0) {timers[0]=test_sta(3); continue;} }
+		wifi_callback();
+//		{ if (timers[0]==0) {timers[0]=test_sta(3); continue;} }
 		RunTaskA(taskled,1);
 		RunTaskA(test_AT,2);
 	};

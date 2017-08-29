@@ -14,6 +14,66 @@
 #define tcp 1
 #define server 2
 
+typedef enum
+{
+	Wifi_Error			=     0, 
+	Wifi_Connected      =     2,
+	TCP_Connected  		=     3,
+	TCP_Disconnected	=     4,
+	Wifi_ConnectionFail	=     5,
+}WifiStatus_t;
+
+typedef	enum					//模块工作模式
+{
+	Error                =     0,
+	Station				 =     1,
+	SoftAp 				 =     2,
+	StationAndSoftAp  	 =     3,	
+}WifiMode_t;
+
+typedef enum					//wifi加密模式 softAP使用
+{
+	Open                 =     0,
+	WPA_PSK              =     2,
+	WPA2_PSK             =     3,
+	WPA_WPA2_PSK         =     4,
+}WifiEncryptionType_t;
+
+typedef struct						//TCP连接相关
+{
+	WifiStatus_t		   status;
+	u8                     LinkId;
+	char                   Type[4];
+	char                   RemoteIp[17];
+	u16                    RemotePort;
+	u16                    LocalPort;
+	u8                   RunAsServer;    
+}WifiConnection_t;
+//###################################################################################################
+typedef struct
+{
+	//----------------变量
+	u8                     	 LinkId;				//发送数据的设备ID
+	u8                       Rxdata[1461];			//数据缓冲
+	u16                      RxDataLen;				//数据长度
+	u8                     	 RxIsData;  
+	u8                       GotNewData;
+	WifiStatus_t		    status;					//网络状态
+	
+	//----------------参数			
+	WifiMode_t               Mode;
+	char                     MyIP[16];	
+	char                     MyGateWay[16];
+	//----------------Station
+	u8                     StationDhcp;
+	char                     StationIp[16];	
+	//----------------TcpIp
+	u8                     TcpIpMultiConnection;
+	u16                      TcpIpPingAnswer;
+	WifiConnection_t         TcpIpConnections[5];        //TCP允许5个连接
+	//----------------
+}Wifi_t;
+
 u8 esp_12F_init(void);
 
 void esp_12F_at_response(u8 mode);        //打印log信息
@@ -28,7 +88,7 @@ u8 esp_12F_quit_trans(void);			  //退出透传模式
 u8 esp_disconnect_wifi(void);			 //断开wifi
 u8 esp_12F_apsta_check(void);			  //网络状态查询
 u8 esp_12F_consta_check(void);			  //wifi连接状态
-void esp_12F_get_staip(u8* ipbuf);        //获取本地ip
+void esp_12F_get_staip(void);        //获取本地ip
 
 u8 tcp_send(u8 id,u8* data,u8 len);		//TCP发送信息
 
@@ -39,7 +99,13 @@ void esp_12F_ap_config(void);			//配置AP
 void esp_12F_msg(void);					  //模块固件信息
 
 u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password);            //连接wifi
+u8 esp_12F_wifi_disconnect(void);										//断开wifi
 u8 esp_12F_setlink_mode(u8 netpro,const u8* ipbuf,const u8* portnum);	//设置连接TCP/udp/server
+u8 Wifi_TcpServer_Disable(void);						//关闭TCP服务
+u8 Wifi_TcpIp_Close(u8 LinkId);							//关闭TCP连接
+
+//接收数据
+u8 wifi_callback(void);
 
 //智能配网功能
 u8 wifi_ESP(void);
@@ -63,4 +129,6 @@ extern u8* kbd_fn_tbl[2];
 extern const u8* esp_12F_NETMODE_TBL[3];
 extern const u8* esp_12F_WORKMODE_TBL[3];
 extern const u8* esp_12F_ECN[5];
+
+extern Wifi_t wifi;
 #endif

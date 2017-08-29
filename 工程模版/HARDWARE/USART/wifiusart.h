@@ -3,7 +3,7 @@
 #include "sys.h"  
 	   
 
-#define wifiUSART_MAX_RECV_LEN		2048				//最大接收缓存字节数  2k byte
+#define wifiUSART_MAX_RECV_LEN		1476				//最大接收缓存字节数  2k byte
 #define wifiUSART_MAX_SEND_LEN		100					//最大发送缓存字节数
 #define wifiUSART_RX_EN 			1					//0,不接收;1,接收.
 #define DMA_RX 			1                               //使能usarT DMA接收

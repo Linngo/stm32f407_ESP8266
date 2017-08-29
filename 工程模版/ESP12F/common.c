@@ -4,7 +4,7 @@
 //用户配置区
 
 //连接端口号:8086,可修改为其他端口.
-const u8* portnum="8086";		 
+const u8* portnum="9100";		 
 
 //WIFI STA模式,设置要去连接的路由器无线参数,请根据你自己的路由器设置,自行修改.
 u8* sta_ssid="TP-LINK_nyear1";			//路由器SSID号
@@ -17,6 +17,8 @@ const u8 ap_encryption=0;	//加密方式 open
 const u8* ap_password=""; 		//连接密码
 const u8 ap_channel=6; 		//信道
 const u8 ap_max_conn=1; 		//最大连接数 范围[1,4]
+
+Wifi_t wifi;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 //4个网络模式 
@@ -190,7 +192,7 @@ u8 esp_12F_apsta_check(void)
 	esp_12F_send_cmd("AT+CIPSTATUS",":",100);	//查询连接状态
 	p=esp_12F_check_cmd("STATUS:");
 	wifiUSART_RX_STA=0;
-	if(p)return p[7];
+	if(p)return p[7]-48;
 	else return 1;
 }
 /*{
@@ -215,27 +217,25 @@ u8 esp_12F_consta_check(void)
 
 //获取本地IP地址
 //ipbuf:ip地址
-void esp_12F_get_staip(u8* ipbuf)
+void esp_12F_get_staip(void)
 {
 	u8 *p=NULL,*p1=NULL;
 	if(esp_12F_send_cmd("AT+CIPSTA?","OK",200))//获取IP地址失败
 	{
-		ipbuf[0]=0;
+		wifi.MyIP[0]=0;
 		return;
 	}		
 	p=esp_12F_check_cmd("\"");
 	p1=(u8*)strstr((const char*)(p+1),"\"");
 	*p1=0;
-	sprintf((char*)ipbuf,"%s",p+1);	
+	sprintf((char*)wifi.MyIP,"%s",p+1);	
 	wifiUSART_RX_STA=0;
 }
 
 //配置启用ap   启用同时wifi会关闭
 void esp_12F_ap_config(void)
 {
-	u8 *p=NULL;
-	
-	p=mymalloc(SRAMIN,32);							//申请32字节内存
+	u8 temp[32];
 	
 	printf("ssid:%s passwd:%s ch:%d ecn:%s max_link:%d\r\n",ap_ssid,ap_password,ap_channel,esp_12F_ECN[ap_encryption],ap_max_conn);
 	
@@ -245,12 +245,10 @@ void esp_12F_ap_config(void)
 	esp_12F_send_cmd("AT+CWDHCPS_DEF=0","OK",50);		//DHCP服务器DNS设置，默认DNS:192.168.4.1
 	
 	//WIFI AP模式模块对外的WIFI网络名称/密码/信道/加密模式/允许连接数
-	sprintf((char*)p,"AT+CWSAP_DEF=\"%s\",\"%s\",%d,%d,%d",ap_ssid,ap_password,ap_channel,ap_encryption,ap_max_conn);
-	esp_12F_send_cmd(p,"OK",100);					//配置AP参数
+	sprintf((char*)temp,"AT+CWSAP_DEF=\"%s\",\"%s\",%d,%d,%d",ap_ssid,ap_password,ap_channel,ap_encryption,ap_max_conn);
+	esp_12F_send_cmd(temp,"OK",100);					//配置AP参数
 	
 	wifiUSART_RX_STA=0;
-	
-	myfree(SRAMIN,p);		//释放内存 
 }
 
 //esp_12F模块信息
@@ -344,11 +342,13 @@ ESP:
 //更改tcp服务器端口
 u8 change_port(u8* portnum)
 {
-	u8* p=NULL;
+	u8 p[24]={0};
+	u8 lens;
 	u8 res=0;
 	esp_12F_send_cmd("AT+CIPMUX=1","OK",100);
 	esp_12F_send_cmd("AT+CIPSERVER=0","OK",100);
-	sprintf((char*)p,"AT+CIPSERVER=1,%s",(u8*)portnum);
+	lens=sprintf((char*)p,"AT+CIPSERVER=1,%s",(u8*)portnum);
+	p[lens]=0;
 	if(esp_12F_send_cmd(p,"OK",100)) res=1;
 	return res; 
 }
@@ -360,7 +360,6 @@ u8* chech_ssid(u8* ssid)
 {
 	esp_12F_send_cmd("AT+CWLAP","+CWLAP:",5000);
 	while(esp_12F_check_cmd("OK")){delay_ms(10);wifiUSART_RX_STA=0;};
-//	esp_12F_at_response(1);  //输出扫描到的信息wifi
 	return esp_12F_check_cmd(ssid);
 }
 
@@ -371,10 +370,12 @@ u8 tcp_send(u8 id,u8* data,u8 len)
 {
 	u8 overtime=0;
 	u8 res=0;
-	u8* p=NULL;
+	u8 temp[20]={0};
+	u8 lens=0;
 	
-	sprintf((char*)p,"AT+CIPSENDEX=%d,%d",id,len);
-	esp_12F_send_cmd(p,"\r\n> ",1000);	//发送命令
+	lens = sprintf((char*)temp,"AT+CIPSENDEX=%d,%d",id,len);
+	temp[lens]=0;
+	esp_12F_send_cmd(temp,"\r\n> ",1000);	//发送命令
 	wifiUSART_RX_STA=0;
 	u3_printf("%s\\0",data);//测试数据
 	while(!esp_12F_check_cmd("SEND OK"))					//等待发送完成
@@ -382,7 +383,7 @@ u8 tcp_send(u8 id,u8* data,u8 len)
 		wifiUSART_RX_STA=0;
 		delay_ms(10);
 		overtime++;
-		if(overtime>30)
+		if(overtime>300)
 		{	
 			res=1;
 			break;
@@ -391,3 +392,22 @@ u8 tcp_send(u8 id,u8* data,u8 len)
 	wifiUSART_RX_STA=0;
 	return res;
 }
+//关闭tcp服务
+u8 Wifi_TcpServer_Disable(void)
+{
+	return esp_12F_send_cmd("AT+CIPSERVER=0","OK",100);
+}
+//关闭TCP连接
+u8 Wifi_TcpIp_Close(u8 LinkId)
+{
+	u8 temp[13];
+	sprintf((char*)temp,"AT+CIPCLOSE=%d",LinkId);
+	return esp_12F_send_cmd(temp,"OK",100);
+}
+//断开wifi
+u8 esp_12F_wifi_disconnect(void)
+{
+	return  esp_12F_send_cmd("AT+CWQAP","OK",100);
+}
+u8 Wifi_TcpIp_Ping(u8* ip)
+{return 0;}
