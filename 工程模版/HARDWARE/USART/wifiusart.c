@@ -6,6 +6,9 @@
 #include "timer.h"
 #include "dma.h"
 
+////串口使用usart2 pd5|pd6 波特率：115200
+u8 i=0;
+
 //串口发送缓存区 	
 __align(8) u8 wifiUSART_TX_BUF[wifiUSART_MAX_SEND_LEN]; 	//发送缓冲,最大wifiUSART_MAX_SEND_LEN字节
 #ifdef wifiUSART_RX_EN   								//如果使能了接收   	  
@@ -45,18 +48,20 @@ void USART2_IRQHandler(void)
 	{
 		clear = USART2->SR;
 		clear = USART2->DR;
+		i++;
 #ifdef DMA_RX		
 		DMA_Cmd(DMA1_Stream5,DISABLE); 
 		if((wifiUSART_RX_STA&(1<<15))==0)         //允许接收新数据到wifiUSART_RX_BUF
 		{	
 			wifiUSART_RX_STA = RECE_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Stream5);
-			if(wifiUSART_RX_STA>(RECE_BUF_SIZE)) wifiUSART_RX_STA=RECE_BUF_SIZE;
+//			if(wifiUSART_RX_STA>(RECE_BUF_SIZE)) wifiUSART_RX_STA=RECE_BUF_SIZE;
+//			wifiUSART_RX_STA = wifiUSART_RX_STA>(RECE_BUF_SIZE)?RECE_BUF_SIZE:wifiUSART_RX_STA;
 			memcpy(wifiUSART_RX_BUF,ReceiveBuff,wifiUSART_RX_STA);	
 		}
 		DMA_ClearFlag(DMA1_Stream5,DMA_FLAG_TCIF5);//清除DMA1_Steam5传输完成标志  
 		DMA_SetCurrDataCounter(DMA1_Stream5, RECE_BUF_SIZE);  
 		DMA_Cmd(DMA1_Stream5,ENABLE);     //打开DMA,
-		if(wifiUSART_RX_STA==RECE_BUF_SIZE){ //数据超长 多接收一帧处理
+		if(wifiUSART_RX_STA==RECE_BUF_SIZE){ //数据超长 多接收一帧错误数据处理
 				DMA_Cmd(DMA1_Stream5,DISABLE);
 				DMA_ClearFlag(DMA1_Stream5,DMA_FLAG_TCIF5);
 				DMA_SetCurrDataCounter(DMA1_Stream5, RECE_BUF_SIZE);

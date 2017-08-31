@@ -14,12 +14,12 @@ u8 esp_12F_sta_link_wifi(const u8* ssid,const u8* password)
 	
 //	printf("无线参数为:%s,%s,%s\r\n",(u8*)ssid,(u8*)sta_encryption,(u8*)password);
 
-	while(esp_12F_send_cmd("AT+CWMODE=1","OK",500))
+	while(esp_12F_send_cmd("AT+CWMODE_CUR=1","OK",500))
 	{i++;if(i>20) {res=1;goto re;}};		//设置WIFI STA模式	
 	wifi.Mode=Station;
 	
 //	if(!chech_ssid((u8*)ssid)) goto re;		//验证ssid是否存在
-	sprintf((char*)p,"AT+CWJAP=\"%s\",\"%s\"",ssid,password);//设置无线参数:ssid,密码
+	sprintf((char*)p,"AT+CWJAP_CUR=\"%s\",\"%s\"",ssid,password);//设置无线参数:ssid,密码
 	//sprintf((char*)p,"AT+CWJAP_CUR=\"%s\",\"%s\",\"%s\"\r\n",ssid,password,MAC);
 
 	while(esp_12F_send_cmd(p,"WIFI GOT IP",5000))
@@ -142,7 +142,8 @@ u8 wifi_callback(void)
 			wifiUSART_RX_STA=0;				//允许新数据
 			return 1;
 		}
-		wifiUSART_RX_STA=0;
+		if(esp_12F_check_cmd("\r\nOK\r\n"))
+			wifiUSART_RX_STA=0;
 	}
 	return 0;
 }

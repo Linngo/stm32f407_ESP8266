@@ -3,15 +3,15 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////// 
 //ÓÃ»§ÅäÖÃÇø
 
-//Á¬½Ó¶Ë¿ÚºÅ:8086,¿ÉĞŞ¸ÄÎªÆäËû¶Ë¿Ú.
+//Á¬½Ó¶Ë¿ÚºÅ
 const u8* portnum="9100";		 
 
-//WIFI STAÄ£Ê½,ÉèÖÃÒªÈ¥Á¬½ÓµÄÂ·ÓÉÆ÷ÎŞÏß²ÎÊı,Çë¸ù¾İÄã×Ô¼ºµÄÂ·ÓÉÆ÷ÉèÖÃ,×ÔĞĞĞŞ¸Ä.
+//WIFI STAÄ£Ê½,ÉèÖÃÒªÈ¥Á¬½ÓµÄÂ·ÓÉÆ÷ÎŞÏß²ÎÊı,
 u8* sta_ssid="TP-LINK_nyear1";			//Â·ÓÉÆ÷SSIDºÅ
 u8* sta_encryption="wpawpa2_aes";	//wpa/wpa2 aes¼ÓÃÜ·½Ê½
 u8* sta_password="18691869070"; 	//Á¬½ÓÃÜÂë
 
-//WIFI APÄ£Ê½,Ä£¿é¶ÔÍâµÄÎŞÏß²ÎÊı,¿É×ÔĞĞĞŞ¸Ä.
+//WIFI ÈíAPÄ£Ê½,Ä£¿é¶ÔÍâµÄÎŞÏß²ÎÊı.
 const u8* ap_ssid="ESP12F";			//¶ÔÍâSSIDºÅ
 const u8 ap_encryption=0;	//¼ÓÃÜ·½Ê½ open
 const u8* ap_password=""; 		//Á¬½ÓÃÜÂë
@@ -32,9 +32,16 @@ const u8 *esp_12F_ECN[5]={"open","WEP","WPA_PSK","WPA2_PSK","WPA_WPA2_PSK"};	//¼
 //			1,Òì³£
 u8 esp_12F_init(void)
 {
-	static	u8 i=0;
- 	wifiUSART_init(115200);	//³õÊ¼»¯´®¿Ú
-	
+	static	u8 band=0;
+	u8 i=0;
+	u8 res=0;
+
+set:	
+	if(band==0)
+		wifiUSART_init(115200);	//³õÊ¼»¯´®¿Ú
+	else
+		wifiUSART_init(460800);	//³õÊ¼»¯´®¿Ú
+		
 	USART_DMACmd(USART2,USART_DMAReq_Rx,ENABLE);  //Ê¹ÄÜ´®¿ÚµÄDMA½ÓÊÕ
 	MYDMA_Config(DMA1_Stream5,DMA_Channel_4,(u32)&USART2->DR,(u32)ReceiveBuff,RECE_BUF_SIZE,rev);
 	USART_DMACmd(USART2,USART_DMAReq_Tx,ENABLE);  //Ê¹ÄÜ´®¿ÚµÄDMA·¢ËÍ 
@@ -48,10 +55,24 @@ u8 esp_12F_init(void)
 		if(i>20)
 		{
 //			printf("wifiÄ£¿é´®¿ÚÍ¨ĞÅÒì³£\r\n");
-			return 1;
+			res=1;
+			i=0;
+			break;
 		}
 	}
-	return 0;
+	esp_12F_send_cmd("ATE0","OK",100);//¹Ø»ØÏÔ
+	if(band==0)
+	{
+			esp_12F_send_cmd("AT+UART_CUR=460800,8,1,0,0","OK",100);
+			
+			DMA_ITConfig(DMA1_Stream6,DMA_IT_TC,DISABLE);
+			USART_DMACmd(USART2,USART_DMAReq_Rx,DISABLE);  //Ê¹ÄÜ´®¿ÚµÄDMA½ÓÊÕ
+			USART_DMACmd(USART2,USART_DMAReq_Tx,DISABLE);  //Ê¹ÄÜ´®¿ÚµÄDMA·¢ËÍ 
+			USART_Cmd(USART2, DISABLE);               //¹Ø±Õ´®¿Ú
+			band=1;
+			goto set;
+	}
+	return res;
 } 
 
 //½«ÊÕµ½µÄATÖ¸ÁîÓ¦´ğÊı¾İ·µ»Ø¸øµçÄÔ´®¿Ú   ´òÓ¡debugĞÅÏ¢
@@ -370,7 +391,7 @@ u8 tcp_send(u8 id,u8* data,u8 len)
 	
 	lens = sprintf((char*)temp,"AT+CIPSENDEX=%d,%d",id,len);
 	temp[lens]=0;
-	esp_12F_send_cmd(temp,"\r\n> ",1000);	//·¢ËÍÃüÁî
+	esp_12F_send_cmd(temp,"\r\n> ",1600);	//·¢ËÍÃüÁî
 	wifiUSART_RX_STA=0;
 	u3_printf("%s\\0",data);//²âÊÔÊı¾İ
 	while(!esp_12F_check_cmd("SEND OK"))					//µÈ´ı·¢ËÍÍê³É
