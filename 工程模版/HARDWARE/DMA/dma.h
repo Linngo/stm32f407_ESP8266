@@ -10,7 +10,7 @@
 //#define DMA_IRQRX
 
 #define SEND_BUF_SIZE 100	//100 byte
-#define RECE_BUF_SIZE 1476  //  模块一次接收的数据长度4k
+#define RECE_BUF_SIZE 2920  //  模块一次接收的数据长度4k
 
 extern u8 SendBuff[SEND_BUF_SIZE];    //发送数据缓冲区 
 extern u8 ReceiveBuff[RECE_BUF_SIZE];   //接收缓冲

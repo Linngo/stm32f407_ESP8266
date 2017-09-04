@@ -28,6 +28,18 @@ void initled(void)
 
 	GPIO_SetBits(GPIOD,GPIO_Pin_13 | GPIO_Pin_14);		
 }
+void button(void)
+{
+	GPIO_InitTypeDef  GPIO_InitStructure;
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
+}
 //实验伪多线程
 unsigned char taskled(void)
 {
@@ -50,6 +62,7 @@ static u8 *p=NULL;
 static u8 *p1=NULL;
 static u16 t=0;		//加速第一次获取链接状态
 static u8 constate=0;	//连接状态
+static u8 bt=0;
 
 _SS	
 	p=mymalloc(SRAMIN,32);
@@ -58,9 +71,33 @@ _SS
 	wifi.RxTimes=0;
 
 	printf("%s测试\r\n",esp_12F_WORKMODE_TBL[netpro-1]);
-		
+			
 	while(1)
 	{
+		if(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0)==1)
+		{
+			WaitX(200);
+			WaitX(200);
+			if(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0)==1)
+				bt=1;
+			else
+				bt=0;
+		}
+		while(bt==1)
+		{
+			printf("配置wifi账号密码\r\n");
+			if(wifi_ESP()==0)
+			{
+				printf("smartconfig成功\r\n");
+				wifi.status = Wifi_Connected;
+			}
+			else
+			{
+				printf("smartconfig失败\r\n");
+				wifi.status = Wifi_ConnectionFail;
+			}
+			bt=0;
+		}
 		if(wifiUSART_RX_STA>>15==1)
 		{
 			if(esp_12F_check_cmd("CONNECT"))   //收到设备连接信息
@@ -107,7 +144,7 @@ _SS
 				wifi.Rxdata[wifi.RxDataLen] = 0;
 				
 //				printf("收到客户端%d 数据%d字节,内容:\r\n%s\r\n",wifi.LinkId,wifi.RxDataLen,wifi.Rxdata);
-				printf("%d %d\r\n",wifi.RxTimes,wifi.RxDataLen);
+				printf("%3d %d %d\r\n",wifi.RxTimes,wifi.RxDataLen,wifiUSART_RX_STA&0x7FFF);
 				wifiUSART_RX_STA=0;				//允许新数据
 				t=0;
 			}
@@ -175,16 +212,14 @@ int main(void)
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置系统中断优先级分组2	
 	  
 	initled();
+	button();
 	uart_init(115200);      //调试信息
  	TIM3_Int_Init(100-1,8400-1);	//定时器时钟84M，分频系数8400，所以84M/8400=10Khz的计数频率，计数100次为10ms
 	
 	esp_12F_init();
 	
-#ifdef esp	
-	wifi_ESP();
-#else	
-	esp_12F_sta_link_wifi(sta_ssid,sta_password);
-#endif	
+//	esp_12F_sta_link_wifi(sta_ssid,sta_password);
+
 	esp_12F_setlink_mode(server,(const u8*)"240",portnum);
 	while(1)
 	{	

@@ -61,6 +61,7 @@ typedef struct
 	WifiMode_t               Mode;
 	char                     MyIP[16];	
 	char                     MyGateWay[16];
+	char					 MAC[18];
 	//----------------Tcp设备
 	WifiConnection_t         TcpIpConnections[5];    //5个连接TCP客户端信息
 	//----------------
@@ -81,6 +82,7 @@ u8 esp_disconnect_wifi(void);			 //断开wifi
 u8 esp_12F_apsta_check(void);			  //网络状态查询
 u8 esp_12F_consta_check(void);			  //wifi连接状态
 void esp_12F_get_staip(void);        //获取本地ip
+void esp_12F_get_stamac(void);		//获取MAC
 
 u8 tcp_send(u8 id,u8* data,u8 len);		//TCP发送信息
 

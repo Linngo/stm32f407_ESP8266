@@ -40,7 +40,13 @@ set:
 	if(band==0)
 		wifiUSART_init(115200);	//初始化串口
 	else
-		wifiUSART_init(460800);	//初始化串口
+	{
+		DMA_ITConfig(DMA1_Stream6,DMA_IT_TC,DISABLE);
+		USART_DMACmd(USART2,USART_DMAReq_Rx,DISABLE);  //使能串口的DMA接收
+		USART_DMACmd(USART2,USART_DMAReq_Tx,DISABLE);  //使能串口的DMA发送 
+		USART_Cmd(USART2, DISABLE);               	   //关闭串口
+		wifiUSART_init(576000);	//初始化串口
+	}
 		
 	USART_DMACmd(USART2,USART_DMAReq_Rx,ENABLE);  //使能串口的DMA接收
 	MYDMA_Config(DMA1_Stream5,DMA_Channel_4,(u32)&USART2->DR,(u32)ReceiveBuff,RECE_BUF_SIZE,rev);
@@ -48,7 +54,7 @@ set:
 	MYDMA_Config(DMA1_Stream6,DMA_Channel_4,(u32)&USART2->DR,(u32)SendBuff,SEND_BUF_SIZE,send);
 	DMA_IRQ_init();
 	
-	while(esp_12F_send_cmd("AT","OK",40))
+	while(esp_12F_send_cmd("AT","OK",40))  //测试指令，验证串口通信异常
 	{
 		i++;
 		delay_ms(10);
@@ -57,25 +63,26 @@ set:
 //			printf("wifi模块串口通信异常\r\n");
 			res=1;
 			i=0;
-			break;
+			goto set;
 		}
 	}
-	esp_12F_send_cmd("ATE0","OK",100);//关回显
 	if(band==0)
 	{
-			esp_12F_send_cmd("AT+UART_CUR=460800,8,1,0,0","OK",100);
-			
-			DMA_ITConfig(DMA1_Stream6,DMA_IT_TC,DISABLE);
-			USART_DMACmd(USART2,USART_DMAReq_Rx,DISABLE);  //使能串口的DMA接收
-			USART_DMACmd(USART2,USART_DMAReq_Tx,DISABLE);  //使能串口的DMA发送 
-			USART_Cmd(USART2, DISABLE);               //关闭串口
+			esp_12F_send_cmd("AT+UART_CUR=576000,8,1,0,0","OK",100);
 			band=1;
 			goto set;
 	}
+	esp_12F_send_cmd("ATE0","OK",100);//关回显
+
+	if(!esp_12F_send_cmd("AT+CWMODE_CUR=1","OK",500))
+		wifi.Mode=Station;
+	esp_12F_get_stamac();
 	return res;
 } 
 
 //将收到的AT指令应答数据返回给电脑串口   打印debug信息
+
+
 //mode:0,不清零wifiUSART_RX_STA;
 //     1,清零wifiUSART_RX_STA;
 void esp_12F_at_response(u8 mode)
@@ -244,6 +251,22 @@ void esp_12F_get_staip(void)
 	p1=(u8*)strstr((const char*)(p+1),"\"");
 	*p1=0;
 	sprintf((char*)wifi.MyIP,"%s",p+1);	
+	if(!strstr(wifi.MyIP,"0.0.0.0"))wifi.status = Wifi_Connected;
+	wifiUSART_RX_STA=0;
+}
+//获取MAC
+void esp_12F_get_stamac(void)
+{
+	u8 *p=NULL,*p1=NULL;
+	if(esp_12F_send_cmd("AT+CIPSTAMAC?","OK",200))//获取IP地址失败
+	{
+		wifi.MyIP[0]=0;
+		return;
+	}		
+	p=esp_12F_check_cmd("\"");
+	p1=(u8*)strstr((const char*)(p+1),"\"");
+	*p1=0;
+	sprintf((char*)wifi.MAC,"%s",p+1);	
 	wifiUSART_RX_STA=0;
 }
 
@@ -327,32 +350,26 @@ void stop_ESP(void)
 u8 wifi_ESP(void)
 {
 	u16 i=0;
-ESP:	
+	u8 res=0;
 	set_ESP();
-//	printf("等待smartconfig 配置wifi账号密码\r\n");
-	while(!(esp_12F_check_cmd("WIFI CONNECT")
-			||esp_12F_check_cmd("WIFI GOT IP")))
+	while(!(esp_12F_check_cmd("WIFI GOT IP")))
 	{
 		wifiUSART_RX_STA=0;
 		delay_ms(10);
 		i++;
-		if(i%6000==0)
+		if(i%3000==0)
 		{
-//			printf("等待smartconfig 配置wifi账号密码\r\n");
-			stop_ESP();
-			goto ESP;
+			printf("wifi配置mode\r\n");
 		}
-		if(i>60000)
+		if(i>12000)
 		{
-//			printf("smartconfig失败\r\n");
-			stop_ESP();
 			i=0;
-			return 1;
+			res=1;
+			break;
 		}
 	}
-//	printf("smartconfig成功\r\n");
 	stop_ESP();
-	return 0;
+	return res;
 }
 
 //更改tcp服务器端口
