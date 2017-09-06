@@ -63,7 +63,7 @@ set:
 //			printf("wifi模块串口通信异常\r\n");
 			res=1;
 			i=0;
-			goto set;
+			break;
 		}
 	}
 	if(band==0)

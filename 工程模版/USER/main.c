@@ -132,7 +132,6 @@ _SS
 			if(esp_12F_check_cmd("+IPD,"))		//接收到一次数据了
 			{ 			
 				wifi.RxIsData=1;
-				wifi.RxTimes++;
 				p=(u8 *)strstr((const char*)wifiUSART_RX_BUF,",");
 				p[2]=0;
 				p1=(u8 *)strstr((const char*)(p+3),":");
@@ -144,7 +143,10 @@ _SS
 				wifi.Rxdata[wifi.RxDataLen] = 0;
 				
 //				printf("收到客户端%d 数据%d字节,内容:\r\n%s\r\n",wifi.LinkId,wifi.RxDataLen,wifi.Rxdata);
-				printf("%3d %d %d\r\n",wifi.RxTimes,wifi.RxDataLen,wifiUSART_RX_STA&0x7FFF);
+//				printf("%3d %d %d\r\n",wifi.RxTimes,wifi.RxDataLen,wifiUSART_RX_STA&0x7FFF);
+				
+				wifi.RxTimes+=wifi.RxDataLen;
+				
 				wifiUSART_RX_STA=0;				//允许新数据
 				t=0;
 			}
@@ -156,7 +158,8 @@ _SS
 		{	if(t<60000)
 			{	
 				t++;
-				if(t%6000==0) wifi.RxTimes=0;
+				if(t%3000==0)
+					wifi.RxTimes=0;
 			}else
 			{	
 				constate=esp_12F_apsta_check();//得到连接状态

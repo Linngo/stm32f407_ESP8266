@@ -54,7 +54,7 @@ typedef struct
 	u8                       Rxdata[1461];			//数据缓冲
 	u16                      RxDataLen;				//数据长度
 	u8                     	 RxIsData;  
-	u8											 RxTimes;
+	u16											 RxTimes;
 	u8                       GotNewData;
 	WifiStatus_t		     status;				//网络状态	
 	//----------------参数			
